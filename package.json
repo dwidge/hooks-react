@@ -1,6 +1,8 @@
 {
   "name": "@dwidge/hooks-react",
   "version": "0.0.1",
+  "description": "A set of React hooks for various asynchronous and state management features.",
+  "repository": "github:dwidge/hooks-react",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
@@ -16,7 +18,8 @@
     "src"
   ],
   "scripts": {
-    "prepare": "rimraf dist && ncp assets/ dist/ && tsc && tsc --project tsconfig.esm.json"
+    "prepare": "rimraf dist && ncp assets/ dist/ && tsc && tsc --project tsconfig.esm.json",
+    "test": "node --test"
   },
   "peerDependencies": {
     "react": "^18.2"
@@ -28,5 +31,9 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "packageManager": "pnpm@9.7.1",
+  "engines": {
+    "node": ">=20"
   }
 }
