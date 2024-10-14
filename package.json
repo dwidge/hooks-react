@@ -1,6 +1,6 @@
 {
   "name": "@dwidge/hooks-react",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A set of React hooks for various asynchronous and state management features.",
   "repository": "github:dwidge/hooks-react",
   "main": "./dist/cjs/index.js",
@@ -22,7 +22,7 @@
     "test": "node --enable-source-maps --test --test-name-pattern"
   },
   "peerDependencies": {
-    "react": "^18.2"
+    "react": "^18.2.0"
   },
   "devDependencies": {
     "ncp": "^2.0.0",
