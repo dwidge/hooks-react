@@ -4,5 +4,8 @@ export * from "./useAsync.js";
 export * from "./useBufferedState.js";
 export * from "./useDelayedCallback.js";
 export * from "./useDelayedState.js";
+export * from "./useLogState.js";
+export * from "./useMemoState.js";
+export * from "./useOptionalState.js";
 export * from "./useSaveOnExitState.js";
 export * from "./useTimeout.js";
