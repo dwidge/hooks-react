@@ -3,8 +3,8 @@
 // https://www.boost.org/LICENSE_1_0.txt
 
 import { useState } from "react";
-import { OptionalState } from "./State";
-import { useMemoState } from "./useMemoState";
+import { OptionalState } from "./State.js";
+import { useOptionalMemoState } from "./useMemoState.js";
 
 /**
  * A useState React hook with an optional setter.
@@ -14,4 +14,20 @@ import { useMemoState } from "./useMemoState";
  * @returns {OptionalState<T>} A tuple containing the current state and an optional setter function.
  */
 export const useOptionalState = <T>(initialState: T) =>
-  useMemoState(useState<T>(initialState) as OptionalState<T>);
+  useOptionalMemoState(useState<T>(initialState) as OptionalState<T>);
+
+// export const useOptionalState2 = <T>(
+//   initialState: T,
+//   [v, setV] = useState<T>(initialState),
+// ) =>
+//   useMemoState([
+//     v,
+//     (prev) => {
+//       let vv: T = v;
+//       setV((prev2) => {
+//         vv = typeof prev === "function" ? (prev as (v: T) => T)(prev2) : prev;
+//         return vv;
+//       });
+//       return vv;
+//     },
+//   ] as OptionalState<T>);

@@ -7,4 +7,7 @@ import { Dispatch, SetStateAction } from "react";
 export type Updater<T> = (prev: T) => T;
 export type State<T> = [T, Dispatch<T>?];
 export type BufferedState<T> = [T, Dispatch<Updater<T>>?];
+
 export type OptionalState<T> = [T?, Dispatch<SetStateAction<T>>?];
+export type AsyncDispatch<A> = (value: A) => Promise<A>;
+export type AsyncState<T> = [T?, AsyncDispatch<SetStateAction<T>>?];

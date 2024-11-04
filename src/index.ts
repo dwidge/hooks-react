@@ -8,4 +8,6 @@ export * from "./useLogState.js";
 export * from "./useMemoState.js";
 export * from "./useOptionalState.js";
 export * from "./useSaveOnExitState.js";
+export * from "./useSaveState.js";
+export * from "./useSyncedState.js";
 export * from "./useTimeout.js";
