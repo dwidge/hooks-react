@@ -6,6 +6,7 @@ export * from "./useDelayedCallback.js";
 export * from "./useDelayedState.js";
 export * from "./useLogState.js";
 export * from "./useMemoState.js";
+export * from "./useMemoValue.js";
 export * from "./useOptionalState.js";
 export * from "./useSaveOnExitState.js";
 export * from "./useSaveState.js";

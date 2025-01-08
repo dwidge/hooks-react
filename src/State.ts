@@ -10,4 +10,4 @@ export type BufferedState<T> = [T, Dispatch<Updater<T>>?];
 
 export type OptionalState<T> = [T?, Dispatch<SetStateAction<T>>?];
 export type AsyncDispatch<A> = (value: A) => Promise<A>;
-export type AsyncState<T> = [T?, AsyncDispatch<SetStateAction<T>>?];
+export type AsyncState<T, S = T> = [T?, AsyncDispatch<SetStateAction<S>>?];

@@ -5,6 +5,10 @@
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { AsyncDispatch, AsyncState, OptionalState } from "./State.js";
 import { TimeoutId } from "./TimeoutId.js";
+import { useMemoValue } from "./useMemoValue.js";
+
+const isEqualValue = <A, B>(a: A, b: B): boolean =>
+  JSON.stringify(a) === JSON.stringify(b);
 
 export function useSaveState<T>(
   [externalState, setExternalState]: OptionalState<T> | AsyncState<T>,
@@ -31,34 +35,44 @@ export function useSaveState<T>(
   }, [internalState, changed]);
 
   useEffect(() => {
-    if (!changed) setInternalState(externalState);
+    if (
+      !changedRef.current &&
+      !isEqualValue(internalStateRef.current, externalState)
+    ) {
+      internalStateRef.current = externalState;
+      setInternalState(externalState);
+    }
   }, [externalState, changed]);
 
-  const setValue: Dispatch<SetStateAction<T>> | undefined =
-    internalState !== undefined
-      ? (action: SetStateAction<T>) => {
-          const updatedInternalState =
-            typeof action === "function"
-              ? (action as (prevState: T) => T)(internalState)
-              : action;
+  const setValue: Dispatch<SetStateAction<T>> | undefined = useMemoValue(
+    (internalState) =>
+      internalState !== undefined
+        ? (action: SetStateAction<T>) => {
+            const updatedInternalState =
+              typeof action === "function"
+                ? (action as (prevState: T) => T)(internalState)
+                : action;
 
-          if (updatedInternalState !== internalState) {
-            setInternalState(updatedInternalState);
-            setChanged(true);
+            if (!isEqualValue(updatedInternalState, internalStateRef.current)) {
+              setInternalState(updatedInternalState);
+              internalStateRef.current = updatedInternalState;
+              setChanged(true);
 
-            if (debounceMs !== undefined) {
-              if (debounceTimerRef.current)
-                clearTimeout(debounceTimerRef.current);
+              if (debounceMs !== undefined) {
+                if (debounceTimerRef.current)
+                  clearTimeout(debounceTimerRef.current);
 
-              debounceTimerRef.current = setTimeout(() => {
-                save();
-              }, debounceMs);
+                debounceTimerRef.current = setTimeout(() => {
+                  save();
+                }, debounceMs);
+              }
             }
-          }
 
-          return updatedInternalState;
-        }
-      : undefined;
+            return updatedInternalState;
+          }
+        : undefined,
+    [internalState] as const,
+  );
 
   const save = () => {
     if (
@@ -113,7 +127,10 @@ export function useAsyncSaveState<T>(
   }, [internalState, changed]);
 
   useEffect(() => {
-    if (!changed) setInternalState(externalState);
+    if (!changed && internalStateRef.current !== externalState) {
+      setInternalState(externalState);
+      internalStateRef.current === externalState;
+    }
   }, [externalState, changed]);
 
   const setValue: AsyncDispatch<SetStateAction<T>> | undefined =
@@ -157,6 +174,7 @@ export function useAsyncSaveState<T>(
     if (changedRef.current) {
       setInternalState(externalState);
       setChanged(false);
+      changedRef.current = false;
     }
   };
 

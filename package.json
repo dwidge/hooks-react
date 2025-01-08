@@ -1,6 +1,6 @@
 {
   "name": "@dwidge/hooks-react",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A set of React hooks for various asynchronous and state management features.",
   "repository": "github:dwidge/hooks-react",
   "main": "./dist/cjs/index.js",
