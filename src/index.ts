@@ -5,6 +5,7 @@ export * from "./useAsyncState.js";
 export * from "./useBufferedState.js";
 export * from "./useDelayedCallback.js";
 export * from "./useDelayedState.js";
+export * from "./useJson.js";
 export * from "./useLogState.js";
 export * from "./useMemoState.js";
 export * from "./useMemoValue.js";
