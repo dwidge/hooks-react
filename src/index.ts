@@ -2,6 +2,7 @@ export * from "./State.js";
 export * from "./TimeoutId.js";
 export * from "./useAsync.js";
 export * from "./useAsyncDebounceState.js";
+export * from "./useAsyncInterval.js";
 export * from "./useAsyncState.js";
 export * from "./useBufferedState.js";
 export * from "./useConvert.js";
