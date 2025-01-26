@@ -7,6 +7,7 @@ export * from "./useAsyncState.js";
 export * from "./useBufferedState.js";
 export * from "./useConvert.js";
 export * from "./useCountDebounce.js";
+export * from "./useDeepMemo.js";
 export * from "./useDelayedCallback.js";
 export * from "./useDelayedState.js";
 export * from "./useJson.js";
