@@ -78,12 +78,12 @@ export const AsyncIntervalProvider = <
       );
       try {
         const result = await currentPromiseRef.current;
-        setLastResult(result);
         setLastError(undefined);
+        setLastResult(result);
         return result;
       } catch (error) {
-        setLastError(error instanceof Error ? error : new Error(String(error)));
         setLastResult(undefined);
+        setLastError(error instanceof Error ? error : new Error(String(error)));
         throw error;
       } finally {
         const now = new Date();
@@ -211,12 +211,28 @@ export const useAsyncInterval = <A, R>(): AsyncIntervalContextValue<A, R> => {
   if (context.lastError !== undefined) {
     assert(
       context.lastResult === undefined,
-      "useAsyncIntervalE3: lastResult must be undefined when lastError is defined",
+      new Error(
+        "useAsyncIntervalE3: lastResult must be undefined when lastError is defined",
+        {
+          cause: {
+            lastError: context.lastError,
+            lastResult: context.lastResult,
+          },
+        },
+      ),
     );
   } else if (context.lastResult !== undefined) {
     assert(
       context.lastError === undefined,
-      "useAsyncIntervalE4: lastError must be undefined when lastResult is defined",
+      new Error(
+        "useAsyncIntervalE4: lastError must be undefined when lastResult is defined",
+        {
+          cause: {
+            lastError: context.lastError,
+            lastResult: context.lastResult,
+          },
+        },
+      ),
     );
   }
   return context;
