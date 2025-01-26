@@ -192,3 +192,32 @@ export function useAsyncSaveState<T>(
 
   return [internalState, setValue, changed, save, revert];
 }
+
+export function useLoggedAsyncState<T>(
+  asyncState: AsyncState<T>,
+  log: (...args: any[]) => void = (...a) =>
+    console.log("useLoggedAsyncState1", ...a),
+): AsyncState<T> {
+  const [value, setValue] = asyncState;
+  const valueRef = useRef(value);
+
+  useEffect(() => {
+    if (!isEqualValue(valueRef.current, value)) {
+      log("value", {
+        previous: valueRef.current,
+        current: value,
+      });
+    }
+    valueRef.current = value;
+  }, [value, log]);
+
+  const loggedSetValue: AsyncDispatch<T> | undefined = setValue
+    ? async (action) => {
+        const newValue = await setValue(action);
+        log("setValue", newValue);
+        return newValue;
+      }
+    : undefined;
+
+  return [value, loggedSetValue];
+}
