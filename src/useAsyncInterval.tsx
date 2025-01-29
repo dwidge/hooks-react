@@ -1,15 +1,108 @@
-import { assert } from "@dwidge/utils-js";
+import { assert, randInt } from "@dwidge/utils-js";
 import React, {
-  useState,
-  useEffect,
-  useRef,
   useCallback,
-  createContext,
-  useContext,
+  useEffect,
   useMemo,
+  useRef,
+  useState,
 } from "react";
 
-interface AsyncIntervalContextValue<A, R> {
+// Async Semaphore Hook
+
+export interface AsyncSemaphoreResult<R> {
+  id: number;
+  isRunning: boolean;
+  lastResult?: R;
+  lastError?: Error;
+  execute?: (asyncFn: (signal: AbortSignal) => Promise<R>) => Promise<R>;
+  abort?: () => void;
+}
+
+export const useAsyncSemaphore = <R,>(): AsyncSemaphoreResult<R> => {
+  const [id] = useState<number>(() => randInt());
+  const [isRunning, setIsRunning] = useState(false);
+  const [lastResult, setLastResult] = useState<R | undefined>(undefined);
+  const [lastError, setLastError] = useState<Error | undefined>(undefined);
+  const currentPromiseRef = useRef<Promise<R> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const execute = useCallback(
+    async (asyncFn: (signal: AbortSignal) => Promise<R>): Promise<R> => {
+      // console.log("execute1", id);
+
+      assert(
+        currentPromiseRef.current === null,
+        "executeSemaphoreE21: currentPromiseRef should be null before executing",
+      );
+      assert(
+        abortControllerRef.current === null,
+        "executeSemaphoreE22: abortControllerRef should be null before executing",
+      );
+
+      setIsRunning(true);
+      abortControllerRef.current = new AbortController();
+      currentPromiseRef.current = asyncFn(abortControllerRef.current.signal);
+
+      assert(
+        currentPromiseRef.current != null,
+        "executeSemaphoreE31: currentPromiseRef should be set after executing asyncFn",
+      );
+      assert(
+        abortControllerRef.current != null,
+        "executeSemaphoreE32: abortControllerRef should be set after executing asyncFn",
+      );
+
+      try {
+        const result = await currentPromiseRef.current;
+        setLastError(undefined);
+        setLastResult(result);
+        return result;
+      } catch (error) {
+        setLastResult(undefined);
+        setLastError(error instanceof Error ? error : new Error(String(error)));
+        console.log("catch1", id, error);
+        throw error;
+      } finally {
+        setIsRunning(false);
+
+        assert(
+          currentPromiseRef.current != null,
+          "executeSemaphoreE41: currentPromiseRef should not be null before setting to null in finally",
+        );
+        assert(
+          abortControllerRef.current != null,
+          "executeSemaphoreE42: abortControllerRef should not be null before setting to null in finally",
+        );
+
+        currentPromiseRef.current = null;
+        abortControllerRef.current = null;
+      }
+    },
+    [],
+  );
+
+  const abort = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  }, []);
+
+  useEffect(() => abort, [abort]);
+
+  return {
+    id,
+    isRunning,
+    lastResult,
+    lastError,
+    execute: isRunning ? undefined : execute,
+    abort: isRunning ? abort : undefined,
+  };
+};
+
+// Async Interval Hook
+
+export interface AsyncIntervalResult<A, R> {
+  id: number;
   lastRunTime: Date | null;
   lastResult?: R;
   lastError?: Error;
@@ -19,222 +112,138 @@ interface AsyncIntervalContextValue<A, R> {
   intervalSeconds: number;
 }
 
-const AsyncIntervalContext = createContext<
-  AsyncIntervalContextValue<any, any> | undefined
->(undefined);
-
-interface AsyncIntervalProviderProps<
-  A,
-  R,
-  T extends (signal: AbortSignal, arg: A) => Promise<R>,
-> {
-  intervalSeconds: number;
-  asyncFn: T;
-  children: React.ReactNode;
-  defaultArg: A;
-}
-
 type TimeoutId = ReturnType<typeof setTimeout>;
 
-export const AsyncIntervalProvider = <
+export const useAsyncInterval = <
   A,
   R,
   T extends (signal: AbortSignal, arg: A) => Promise<R>,
->({
-  intervalSeconds,
-  asyncFn,
-  children,
-  defaultArg,
-}: AsyncIntervalProviderProps<A, R, T>) => {
+>(
+  intervalSeconds: number,
+  asyncFn: T,
+  defaultArg: A,
+): AsyncIntervalResult<A, R> => {
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
-  const [lastResult, setLastResult] = useState<R | undefined>(undefined);
-  const [lastError, setLastError] = useState<Error | undefined>(undefined);
-  const [isRunning, setIsRunning] = useState(false);
-  const currentPromiseRef = useRef<Promise<R> | null>(null);
   const timeoutIdRef = useRef<TimeoutId | null>(null);
-  const lastRunTimeRef = useRef<Date | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const { id, isRunning, execute, abort, lastResult, lastError } =
+    useAsyncSemaphore<R>();
 
-  const executeAsyncFn = useCallback(
-    async (arg: A): Promise<R> => {
-      assert(
-        !isRunning,
-        "executeAsyncFnE1: Should not be called when isRunning is true",
-      );
-      setIsRunning(true);
-      assert(
-        currentPromiseRef.current === null,
-        "executeAsyncFnE2: currentPromiseRef should be null before executing",
-      );
-
-      abortControllerRef.current = new AbortController();
-      const signal = abortControllerRef.current.signal;
-
-      currentPromiseRef.current = asyncFn(signal, arg);
-
-      assert(
-        currentPromiseRef.current != null,
-        "executeAsyncFnE3: currentPromiseRef should be set after executing asyncFn",
-      );
-      try {
-        const result = await currentPromiseRef.current;
-        setLastError(undefined);
-        setLastResult(result);
-        return result;
-      } catch (error) {
-        setLastResult(undefined);
-        setLastError(error instanceof Error ? error : new Error(String(error)));
-        throw error;
-      } finally {
-        const now = new Date();
-        lastRunTimeRef.current = now;
-        setLastRunTime(now);
-        setIsRunning(false);
-        assert(
-          currentPromiseRef.current != null,
-          "executeAsyncFnE4: currentPromiseRef should not be null before setting to null in finally",
-        );
-        currentPromiseRef.current = null;
-        abortControllerRef.current = null;
-        assert(
-          timeoutIdRef.current == null || intervalSeconds <= 0,
-          "executeAsyncFnE5: Timeout should be cleared or not set if interval is <= 0 after execution",
-        );
-      }
-    },
-    [asyncFn, isRunning, intervalSeconds],
+  const executeAsyncFn = useMemo(
+    () =>
+      execute
+        ? async (arg: A): Promise<R> =>
+            execute((s) =>
+              asyncFn(s, arg).finally(() => setLastRunTime(new Date())),
+            )
+        : undefined,
+    [asyncFn, execute, id],
   );
 
   const scheduleNextRun = useCallback(() => {
-    if (isRunning) return;
-    if (!intervalSeconds) return;
+    if (!executeAsyncFn) return;
 
     assert(
       timeoutIdRef.current === null,
-      "scheduleNextRunE1: Timeout should be null on initial schedule",
+      "scheduleNextRunE1: timeoutIdRef should be null when not isRunning",
+    );
+
+    if (intervalSeconds <= 0) return;
+
+    let delayMs = intervalSeconds * 1000;
+    const elapsedMs = lastRunTime ? Date.now() - lastRunTime.getTime() : null;
+    const timeoutMs = elapsedMs === null ? 0 : Math.max(0, delayMs - elapsedMs);
+
+    // console.log("setTimeout1", id);
+    timeoutIdRef.current = setTimeout(
+      () => executeAsyncFn(defaultArg),
+      timeoutMs,
     );
     assert(
-      !currentPromiseRef.current,
-      "scheduleNextRunE2: scheduleNextRun should not be called when currentPromiseRef is set",
+      timeoutIdRef.current != null,
+      "scheduleNextRunE4: timeoutIdRef should be set when scheduling",
     );
-    assert(
-      !abortControllerRef.current,
-      "scheduleNextRunE3: scheduleNextRun should not be called when abortControllerRef is set",
-    );
-    if (intervalSeconds > 0) {
-      timeoutIdRef.current = setTimeout(
-        () => executeAsyncFn(defaultArg),
-        intervalSeconds * 1000,
-      );
-      assert(
-        timeoutIdRef.current != null,
-        "scheduleNextRunE4: Timeout ID should be set when scheduling",
-      );
-    }
 
     return () => {
-      if (timeoutIdRef.current) {
-        clearTimeout(timeoutIdRef.current);
-        timeoutIdRef.current = null;
-      }
+      assert(
+        timeoutIdRef.current != null,
+        "scheduleNextRunE5: timeoutIdRef should be set when cleanup",
+      );
+      // console.log("clearTimeout1", id);
+
+      clearTimeout(timeoutIdRef.current as TimeoutId);
+      timeoutIdRef.current = null;
     };
-  }, [intervalSeconds, executeAsyncFn, defaultArg, isRunning]);
-
-  const trigger = executeAsyncFn;
-
-  const abort = useCallback(() => {
-    if (isRunning && abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  }, [isRunning]);
+  }, [intervalSeconds, executeAsyncFn, defaultArg, lastRunTime]);
 
   useEffect(scheduleNextRun, [scheduleNextRun]);
 
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
-    };
-  }, []);
-
-  const contextValue = useMemo<AsyncIntervalContextValue<A, R>>(() => {
+  const context = useMemo<AsyncIntervalResult<A, R>>(() => {
     return {
+      id,
       lastRunTime,
       lastResult,
       lastError,
       isRunning,
-      trigger: !isRunning ? trigger : undefined,
-      abort: isRunning ? abort : undefined,
+      trigger: executeAsyncFn,
+      abort: abort,
       intervalSeconds,
     };
   }, [
+    id,
     lastRunTime,
     lastResult,
     lastError,
     isRunning,
-    trigger,
+    executeAsyncFn,
     abort,
     intervalSeconds,
   ]);
 
-  return (
-    <AsyncIntervalContext.Provider value={contextValue}>
-      {children}
-    </AsyncIntervalContext.Provider>
-  );
-};
+  useEffect(() => {
+    if (context.isRunning) {
+      assert(
+        context.trigger === undefined,
+        "useAsyncIntervalE2: Trigger must not be defined while running",
+      );
+      assert(
+        context.abort !== undefined,
+        "useAsyncIntervalE5: Abort must be defined while running",
+      );
+    } else {
+      assert(
+        context.abort === undefined,
+        "useAsyncIntervalE6: Abort must be undefined when not running",
+      );
+    }
+    if (context.lastError !== undefined) {
+      assert(
+        context.lastResult === undefined,
+        new Error(
+          "useAsyncIntervalE3: lastResult must be undefined when lastError is defined",
+          {
+            cause: {
+              lastError: context.lastError,
+              lastResult: context.lastResult,
+            },
+          },
+        ),
+      );
+    } else if (context.lastResult !== undefined) {
+      assert(
+        context.lastError === undefined,
+        new Error(
+          "useAsyncIntervalE4: lastError must be undefined when lastResult is defined",
+          {
+            cause: {
+              lastError: context.lastError,
+              lastResult: context.lastResult,
+            },
+          },
+        ),
+      );
+    }
+  }, [context]);
 
-export const useAsyncInterval = <A, R>(): AsyncIntervalContextValue<A, R> => {
-  const context = useContext(AsyncIntervalContext);
-  if (!context) {
-    throw new Error(
-      "useAsyncIntervalE1: Must be used within an AsyncIntervalProvider",
-    );
-  }
-  if (context.isRunning) {
-    assert(
-      context.trigger === undefined,
-      "useAsyncIntervalE2: Trigger must not be defined while running",
-    );
-    assert(
-      context.abort !== undefined,
-      "useAsyncIntervalE5: Abort must be defined while running",
-    );
-  } else {
-    assert(
-      context.abort === undefined,
-      "useAsyncIntervalE6: Abort must be undefined when not running",
-    );
-  }
-  if (context.lastError !== undefined) {
-    assert(
-      context.lastResult === undefined,
-      new Error(
-        "useAsyncIntervalE3: lastResult must be undefined when lastError is defined",
-        {
-          cause: {
-            lastError: context.lastError,
-            lastResult: context.lastResult,
-          },
-        },
-      ),
-    );
-  } else if (context.lastResult !== undefined) {
-    assert(
-      context.lastError === undefined,
-      new Error(
-        "useAsyncIntervalE4: lastError must be undefined when lastResult is defined",
-        {
-          cause: {
-            lastError: context.lastError,
-            lastResult: context.lastResult,
-          },
-        },
-      ),
-    );
-  }
   return context;
 };
 
@@ -270,28 +279,41 @@ const exampleAsyncFunction = async (
 };
 
 const ExampleConsumer: React.FC = () => {
-  const { lastRunTime, lastResult, lastError, trigger, isRunning, abort } =
-    useAsyncInterval<FetchDataArg, FetchDataResult>();
+  const {
+    lastRunTime,
+    lastResult,
+    lastError,
+    trigger,
+    isRunning,
+    abort,
+    intervalSeconds,
+  } = useAsyncInterval(3, exampleAsyncFunction, {
+    source: "interval",
+  });
 
   const handleManualTrigger = useCallback(async () => {
-    const resultPromise = trigger?.({ source: "manual" });
-    if (resultPromise) {
-      try {
-        const result = await resultPromise;
-        console.log("Manual trigger result:", result); // Log the result
-      } catch (error) {
-        console.error("Manual trigger error:", error); // Log the error
+    if (trigger) {
+      // Check if trigger is defined before calling
+      const resultPromise = trigger({ source: "manual" });
+      if (resultPromise) {
+        try {
+          const result = await resultPromise;
+          console.log("Manual trigger result:", result); // Log the result
+        } catch (error) {
+          console.error("Manual trigger error:", error); // Log the error
+        }
       }
     }
   }, [trigger]);
 
   const handleAbort = useCallback(() => {
-    abort?.();
+    abort?.(); // Optional chaining as abort might be undefined
     console.log("Manually aborted");
   }, [abort]);
 
   return (
     <StyledView>
+      <StyledText>Interval Seconds: {intervalSeconds}</StyledText>
       <StyledText>
         Last run time: {lastRunTime?.toLocaleTimeString() || "Never"}
       </StyledText>
@@ -300,22 +322,16 @@ const ExampleConsumer: React.FC = () => {
       )}
       {abort && <StyledButton onPress={handleAbort}>Abort</StyledButton>}
       <StyledText>Is running: {isRunning ? "Yes" : "No"}</StyledText>
-      <StyledText>Last result: {lastResult || "No result yet"}</StyledText>
+      <StyledText>
+        Last result: {String(lastResult) || "No result yet"}
+      </StyledText>
       <StyledText>Last error: {lastError?.message || "No error"}</StyledText>
     </StyledView>
   );
 };
 
 export const AsyncIntervalDemo: React.FC = () => {
-  return (
-    <AsyncIntervalProvider
-      intervalSeconds={3}
-      asyncFn={exampleAsyncFunction}
-      defaultArg={{ source: "interval" }}
-    >
-      <ExampleConsumer />
-    </AsyncIntervalProvider>
-  );
+  return <ExampleConsumer />;
 };
 
 const StyledView = ({ children }: { children: React.ReactNode }) => (
