@@ -122,6 +122,7 @@ export const useAsyncInterval = <
   intervalSeconds: number,
   asyncFn: T,
   defaultArg: A,
+  enable: boolean = true,
 ): AsyncIntervalResult<A, R> => {
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const timeoutIdRef = useRef<TimeoutId | null>(null);
@@ -141,6 +142,7 @@ export const useAsyncInterval = <
 
   const scheduleNextRun = useCallback(() => {
     if (!executeAsyncFn) return;
+    if (!enable) return;
 
     assert(
       timeoutIdRef.current === null,
@@ -173,7 +175,7 @@ export const useAsyncInterval = <
       clearTimeout(timeoutIdRef.current as TimeoutId);
       timeoutIdRef.current = null;
     };
-  }, [intervalSeconds, executeAsyncFn, defaultArg, lastRunTime]);
+  }, [intervalSeconds, executeAsyncFn, defaultArg, lastRunTime, enable]);
 
   useEffect(scheduleNextRun, [scheduleNextRun]);
 
@@ -244,6 +246,12 @@ export const useAsyncInterval = <
     }
   }, [context]);
 
+  useEffect(() => {
+    if (!enable && isRunning) {
+      abort?.();
+    }
+  }, [enable, isRunning, abort]);
+
   return context;
 };
 
@@ -279,6 +287,7 @@ const exampleAsyncFunction = async (
 };
 
 const ExampleConsumer: React.FC = () => {
+  const [intervalEnabled, setIntervalEnabled] = useState(true);
   const {
     lastRunTime,
     lastResult,
@@ -287,9 +296,14 @@ const ExampleConsumer: React.FC = () => {
     isRunning,
     abort,
     intervalSeconds,
-  } = useAsyncInterval(3, exampleAsyncFunction, {
-    source: "interval",
-  });
+  } = useAsyncInterval(
+    3,
+    exampleAsyncFunction,
+    {
+      source: "interval",
+    },
+    intervalEnabled,
+  );
 
   const handleManualTrigger = useCallback(async () => {
     if (trigger) {
@@ -311,6 +325,10 @@ const ExampleConsumer: React.FC = () => {
     console.log("Manually aborted");
   }, [abort]);
 
+  const toggleInterval = useCallback(() => {
+    setIntervalEnabled(!intervalEnabled);
+  }, [intervalEnabled]);
+
   return (
     <StyledView>
       <StyledText>Interval Seconds: {intervalSeconds}</StyledText>
@@ -321,6 +339,9 @@ const ExampleConsumer: React.FC = () => {
         <StyledButton onPress={handleManualTrigger}>Trigger</StyledButton>
       )}
       {abort && <StyledButton onPress={handleAbort}>Abort</StyledButton>}
+      <StyledButton onPress={toggleInterval}>
+        {intervalEnabled ? "Disable Interval" : "Enable Interval"}
+      </StyledButton>
       <StyledText>Is running: {isRunning ? "Yes" : "No"}</StyledText>
       <StyledText>
         Last result: {String(lastResult) || "No result yet"}
