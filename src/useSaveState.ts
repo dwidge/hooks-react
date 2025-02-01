@@ -6,9 +6,9 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { AsyncDispatch, AsyncState, OptionalState } from "./State.js";
 import { TimeoutId } from "./TimeoutId.js";
 import { useMemoValue } from "./useMemoValue.js";
+import { deepCompare } from "./deepCompare.js";
 
-const isEqualValue = <A, B>(a: A, b: B): boolean =>
-  JSON.stringify(a) === JSON.stringify(b);
+const isEqualValue = <A, B>(a: A, b: B): boolean => deepCompare(a, b);
 
 export function useSaveState<T>(
   [externalState, setExternalState]: OptionalState<T> | AsyncState<T>,
@@ -42,7 +42,7 @@ export function useSaveState<T>(
       internalStateRef.current = externalState;
       setInternalState(externalState);
     }
-  }, [externalState, changed]);
+  }, [externalState]);
 
   const setValue: Dispatch<SetStateAction<T>> | undefined = useMemoValue(
     (internalState) =>
@@ -127,11 +127,14 @@ export function useAsyncSaveState<T>(
   }, [internalState, changed]);
 
   useEffect(() => {
-    if (!changed && internalStateRef.current !== externalState) {
+    if (
+      !changedRef.current &&
+      !isEqualValue(internalStateRef.current, externalState)
+    ) {
+      internalStateRef.current = externalState;
       setInternalState(externalState);
-      internalStateRef.current === externalState;
     }
-  }, [externalState, changed]);
+  }, [externalState]);
 
   const setValue: AsyncDispatch<T> | undefined =
     internalState !== undefined
