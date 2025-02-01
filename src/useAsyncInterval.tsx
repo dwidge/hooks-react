@@ -60,7 +60,7 @@ export const useAsyncSemaphore = <R,>(): AsyncSemaphoreResult<R> => {
       } catch (error) {
         setLastResult(undefined);
         setLastError(error instanceof Error ? error : new Error(String(error)));
-        console.log("catch1", id, error);
+        // console.log("catch1", id, error);
         throw error;
       } finally {
         setIsRunning(false);
