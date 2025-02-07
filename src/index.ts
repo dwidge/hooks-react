@@ -1,5 +1,6 @@
 export * from "./State.js";
 export * from "./TimeoutId.js";
+export * from "./tryOrDefault.js";
 export * from "./useAsync.js";
 export * from "./useAsyncDebounceState.js";
 export * from "./useAsyncInterval.js";
