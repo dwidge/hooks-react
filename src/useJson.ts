@@ -25,10 +25,9 @@ export function useJson([stringValue, setStringValueAsync]: AsyncState<
     () =>
       setStringValueAsync
         ? ((async (newValue) => {
-            const resolvedValue =
-              newValue instanceof Function
-                ? newValue(decodedValue ?? (null as Json | null))
-                : newValue;
+            const resolvedValue = await (newValue instanceof Function
+              ? newValue(decodedValue ?? (null as Json | null))
+              : newValue);
             const stringifiedValue = toString_fromJson(resolvedValue);
             await setStringValueAsync(stringifiedValue);
             return newValue;

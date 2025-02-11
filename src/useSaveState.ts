@@ -138,11 +138,10 @@ export function useAsyncSaveState<T>(
 
   const setValue: AsyncDispatch<T> | undefined =
     internalState !== undefined
-      ? async (action: SetStateAction<T>) => {
-          const updatedInternalState =
-            typeof action === "function"
-              ? (action as (prevState: T) => T)(internalState)
-              : action;
+      ? async (action) => {
+          const updatedInternalState = await (typeof action === "function"
+            ? (action as (prevState: T) => T)(internalState)
+            : action);
 
           if (updatedInternalState !== internalState) {
             setInternalState(updatedInternalState);

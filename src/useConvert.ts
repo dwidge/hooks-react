@@ -14,22 +14,23 @@ import { AsyncDispatch, AsyncState } from "./State.js";
  */
 export const useConvert =
   <T, R = T>(toR: (t: T) => R, toT: (r: R, prevT: T) => T) =>
-    ([t, setT]: AsyncState<T>): AsyncState<R> => {
-      const r = t === undefined ? undefined : toR(t);
+  ([t, setT]: AsyncState<T>): AsyncState<R> => {
+    const r = t === undefined ? undefined : toR(t);
 
-      const setR = useMemo(
-        () =>
-          setT && t !== undefined
-            ? ((async (getR) => {
-                const newRValue: R =
-                  getR instanceof Function ? getR(r as R) : getR;
-                const tValue: T = toT(newRValue, t);
-                await setT(tValue);
-                return newRValue;
-              }) as AsyncDispatch<R>)
-            : undefined,
-        [r, setT, toT, t],
-      );
+    const setR = useMemo(
+      () =>
+        setT && t !== undefined
+          ? ((async (getR) => {
+              const newRValue: R = await (getR instanceof Function
+                ? getR(r as R)
+                : getR);
+              const tValue: T = toT(newRValue, t);
+              await setT(tValue);
+              return newRValue;
+            }) as AsyncDispatch<R>)
+          : undefined,
+      [r, setT, toT, t],
+    );
 
-      return [r, setR];
-    };
+    return [r, setR];
+  };

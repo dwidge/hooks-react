@@ -3,7 +3,7 @@
 // https://www.boost.org/LICENSE_1_0.txt
 
 import { useEffect, useState } from "react";
-import { State, BufferedState } from "./State.js";
+import { BufferedState, State } from "./State.js";
 
 export function useBufferedState<T>([
   value,
