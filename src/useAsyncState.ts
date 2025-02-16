@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AsyncDispatch, AsyncState } from "./State.js";
 
-export function useAsyncState<T>(initialState: T | (() => T)): AsyncState<T> {
-  const [state, setState] = useState<T>(initialState);
-  const stateRef = useRef<T>(state);
+export function useAsyncState<T>(initialState?: T | (() => T)): AsyncState<T> {
+  const [state, setState] = useState<T | undefined>(initialState);
+  const stateRef = useRef<T | undefined>(state);
   stateRef.current = state; // Keep the ref updated with the latest state
 
   const asyncDispatch: AsyncDispatch<T> = useCallback(
     async (action) => {
       const newState: T = await (typeof action === "function"
-        ? (action as (prevState: T) => T | Promise<T>)(stateRef.current)
+        ? (action as (prevState: T | undefined) => T | Promise<T>)(
+            stateRef.current,
+          )
         : action);
       setState(newState);
       return newState;

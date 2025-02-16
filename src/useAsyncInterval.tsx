@@ -16,6 +16,7 @@ export interface AsyncSemaphoreResult<R> {
   lastError?: Error;
   execute?: (asyncFn: (signal: AbortSignal) => Promise<R>) => Promise<R>;
   abort?: () => void;
+  reset: () => void;
 }
 
 export const useAsyncSemaphore = <R,>(): AsyncSemaphoreResult<R> => {
@@ -87,6 +88,16 @@ export const useAsyncSemaphore = <R,>(): AsyncSemaphoreResult<R> => {
     }
   }, []);
 
+  const reset = useCallback(async () => {
+    abort();
+    await new Promise((res) => setTimeout(res, 0));
+    setIsRunning(false);
+    setLastResult(undefined);
+    setLastError(undefined);
+    currentPromiseRef.current = null;
+    abortControllerRef.current = null;
+  }, []);
+
   useEffect(() => abort, [abort]);
 
   return {
@@ -96,6 +107,7 @@ export const useAsyncSemaphore = <R,>(): AsyncSemaphoreResult<R> => {
     lastError,
     execute: isRunning ? undefined : execute,
     abort: isRunning ? abort : undefined,
+    reset,
   };
 };
 
@@ -110,6 +122,7 @@ export interface AsyncIntervalResult<A, R> {
   trigger?: (arg: A) => Promise<R>;
   abort?: () => void;
   intervalSeconds: number;
+  reset: () => void;
 }
 
 type TimeoutId = ReturnType<typeof setTimeout>;
@@ -126,8 +139,15 @@ export const useAsyncInterval = <
 ): AsyncIntervalResult<A, R> => {
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const timeoutIdRef = useRef<TimeoutId | null>(null);
-  const { id, isRunning, execute, abort, lastResult, lastError } =
-    useAsyncSemaphore<R>();
+  const {
+    id,
+    isRunning,
+    execute,
+    abort,
+    lastResult,
+    lastError,
+    reset: resetSemaphore,
+  } = useAsyncSemaphore<R>();
 
   const executeAsyncFn = useMemo(
     () =>
@@ -179,6 +199,14 @@ export const useAsyncInterval = <
 
   useEffect(scheduleNextRun, [scheduleNextRun]);
 
+  // Reset function for AsyncInterval, includes resetting AsyncSemaphore and interval specific states
+  const reset = useCallback(() => {
+    resetSemaphore();
+    setLastRunTime(null);
+    // This setLastRunTime will cause lastRunTime to change, which calls scheduleNextRun cleanup.
+    // Ensure enable is false before you reset, if you dont want it run again straight after reset.
+  }, [resetSemaphore]);
+
   const context = useMemo<AsyncIntervalResult<A, R>>(() => {
     return {
       id,
@@ -189,6 +217,7 @@ export const useAsyncInterval = <
       trigger: executeAsyncFn,
       abort: abort,
       intervalSeconds,
+      reset,
     };
   }, [
     id,
@@ -199,6 +228,7 @@ export const useAsyncInterval = <
     executeAsyncFn,
     abort,
     intervalSeconds,
+    reset,
   ]);
 
   useEffect(() => {
@@ -296,6 +326,7 @@ const ExampleConsumer: React.FC = () => {
     isRunning,
     abort,
     intervalSeconds,
+    reset,
   } = useAsyncInterval(
     3,
     exampleAsyncFunction,
@@ -329,6 +360,12 @@ const ExampleConsumer: React.FC = () => {
     setIntervalEnabled(!intervalEnabled);
   }, [intervalEnabled]);
 
+  // Handler to reset the interval hook
+  const handleReset = useCallback(() => {
+    reset();
+    console.log("Interval reset");
+  }, [reset]);
+
   return (
     <StyledView>
       <StyledText>Interval Seconds: {intervalSeconds}</StyledText>
@@ -342,6 +379,7 @@ const ExampleConsumer: React.FC = () => {
       <StyledButton onPress={toggleInterval}>
         {intervalEnabled ? "Disable Interval" : "Enable Interval"}
       </StyledButton>
+      <StyledButton onPress={handleReset}>Reset</StyledButton>
       <StyledText>Is running: {isRunning ? "Yes" : "No"}</StyledText>
       <StyledText>
         Last result: {String(lastResult) || "No result yet"}

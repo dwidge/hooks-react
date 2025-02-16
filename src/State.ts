@@ -21,3 +21,6 @@ export const getActionValue = async <A>(
   prev: A,
 ): Promise<A> =>
   typeof v === "function" ? (v as (prevState: A) => A | Promise<A>)(prev) : v;
+
+export const getActionValueSync = <A>(v: SetStateAction<A>, prev: A): A =>
+  typeof v === "function" ? (v as (prevState: A) => A)(prev) : v;

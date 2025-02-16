@@ -1,6 +1,7 @@
 export * from "./State.js";
 export * from "./TimeoutId.js";
 export * from "./tryOrDefault.js";
+export * from "./useArray.js";
 export * from "./useAsync.js";
 export * from "./useAsyncDebounceState.js";
 export * from "./useAsyncInterval.js";
@@ -16,6 +17,7 @@ export * from "./useLogState.js";
 export * from "./useMemoState.js";
 export * from "./useMemoValue.js";
 export * from "./useOptionalState.js";
+export * from "./useRecord.js";
 export * from "./useSaveOnExitState.js";
 export * from "./useSaveState.js";
 export * from "./useSyncedState.js";
