@@ -13,6 +13,7 @@ export * from "./useDeepMemo.js";
 export * from "./useDelayedCallback.js";
 export * from "./useDelayedState.js";
 export * from "./useJson.js";
+export * from "./useLog.js";
 export * from "./useLogState.js";
 export * from "./useMemoState.js";
 export * from "./useMemoValue.js";
