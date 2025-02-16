@@ -130,7 +130,7 @@ type TimeoutId = ReturnType<typeof setTimeout>;
 export const useAsyncInterval = <
   A,
   R,
-  T extends (signal: AbortSignal, arg: A) => Promise<R>,
+  T extends ((signal: AbortSignal, arg: A) => Promise<R>) | undefined,
 >(
   intervalSeconds: number,
   asyncFn: T,
@@ -151,7 +151,7 @@ export const useAsyncInterval = <
 
   const executeAsyncFn = useMemo(
     () =>
-      execute
+      execute && asyncFn
         ? async (arg: A): Promise<R> =>
             execute((s) =>
               asyncFn(s, arg).finally(() => setLastRunTime(new Date())),
