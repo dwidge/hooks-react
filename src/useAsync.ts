@@ -33,7 +33,7 @@ export const useAsync = <F extends (...args: any[]) => Promise<any>>(
               return executionResult;
             } catch (e) {
               setError(e as Error);
-              throw e;
+              // throw e;
             } finally {
               setBusy(false);
             }
