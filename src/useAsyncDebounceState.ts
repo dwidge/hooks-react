@@ -1,5 +1,5 @@
 import { AsyncState } from "./State";
-import { useAsyncSaveState } from "./useSaveState";
+import { useAsyncSaveState } from "./useSaveState.js";
 
 export const useAsyncDebounceState = <T>(
   [value, setValue]: AsyncState<T>,

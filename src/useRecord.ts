@@ -1,5 +1,5 @@
 import { SetStateAction, useMemo, useState } from "react";
-import { getActionValueSync, OptionalState } from "./State"; // Assuming this exists
+import { getActionValueSync, OptionalState } from "./State.js";
 
 /**
  * Hook to observe record keys.
