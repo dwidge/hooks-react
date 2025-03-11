@@ -136,6 +136,7 @@ export const useAsyncInterval = <
   asyncFn: T,
   defaultArg: A,
   enable: boolean = true,
+  semaphore: AsyncSemaphoreResult<R> = useAsyncSemaphore<R>(),
 ): AsyncIntervalResult<A, R> => {
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const timeoutIdRef = useRef<TimeoutId | null>(null);
@@ -147,7 +148,7 @@ export const useAsyncInterval = <
     lastResult,
     lastError,
     reset: resetSemaphore,
-  } = useAsyncSemaphore<R>();
+  } = semaphore;
 
   const executeAsyncFn = useMemo(
     () =>
