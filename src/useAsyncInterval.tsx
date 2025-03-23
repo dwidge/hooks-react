@@ -31,6 +31,9 @@ export const useAsyncSemaphore = <R,>(): AsyncSemaphoreResult<R> => {
     async (asyncFn: (signal: AbortSignal) => Promise<R>): Promise<R> => {
       // console.log("execute1", id);
 
+      if (currentPromiseRef.current !== null)
+        return await currentPromiseRef.current;
+
       assert(
         currentPromiseRef.current === null,
         "executeSemaphoreE21: currentPromiseRef should be null before executing",
