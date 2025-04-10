@@ -15,6 +15,7 @@ export * from "./useDelayedState.js";
 export * from "./useJson.js";
 export * from "./useLog.js";
 export * from "./useLogState.js";
+export * from "./useLogVariables.js";
 export * from "./useMemoState.js";
 export * from "./useMemoValue.js";
 export * from "./useOptionalState.js";
