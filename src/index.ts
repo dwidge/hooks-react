@@ -1,3 +1,4 @@
+export * from "./Boundary.js";
 export * from "./State.js";
 export * from "./TimeoutId.js";
 export * from "./tryOrDefault.js";
