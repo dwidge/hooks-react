@@ -69,11 +69,11 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error(
-      `Error caught by ${this.constructor.name}:`,
-      error,
-      errorInfo,
-    );
+    // console.error(
+    //   `Error caught by ${this.constructor.name}:`,
+    //   error,
+    //   errorInfo,
+    // );
   }
 
   componentDidUpdate(prevProps: ErrorBoundaryProps): void {
