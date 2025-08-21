@@ -3,10 +3,10 @@
 // https://www.boost.org/LICENSE_1_0.txt
 
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { deepCompare } from "./deepCompare.js";
 import { AsyncDispatch, AsyncState, OptionalState } from "./State.js";
 import { TimeoutId } from "./TimeoutId.js";
 import { useMemoValue } from "./useMemoValue.js";
-import { deepCompare } from "./deepCompare.js";
 
 const isEqualValue = <A, B>(a: A, b: B): boolean => deepCompare(a, b);
 
@@ -140,10 +140,12 @@ export function useAsyncSaveState<T>(
     internalState !== undefined
       ? async (action) => {
           const updatedInternalState = await (typeof action === "function"
-            ? (action as (prevState: T) => T)(internalState)
+            ? (action as (prevState: T) => T)(
+                internalStateRef.current ?? internalState,
+              )
             : action);
 
-          if (updatedInternalState !== internalState) {
+          if (updatedInternalState !== internalStateRef.current) {
             setInternalState(updatedInternalState);
             setChanged(true);
 
