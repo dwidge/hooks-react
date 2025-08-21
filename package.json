@@ -23,7 +23,7 @@
   },
   "peerDependencies": {
     "@dwidge/utils-js": "^0.0.22",
-    "react": "^18.2.0"
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "ncp": "^2.0.0",
