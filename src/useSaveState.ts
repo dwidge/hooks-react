@@ -27,7 +27,7 @@ export function useSaveState<T>(
 
   const internalStateRef = useRef(internalState);
   const changedRef = useRef(changed);
-  const debounceTimerRef = useRef<TimeoutId>();
+  const debounceTimerRef = useRef<TimeoutId>(undefined);
 
   useEffect(() => {
     internalStateRef.current = internalState;
@@ -119,7 +119,7 @@ export function useAsyncSaveState<T>(
 
   const internalStateRef = useRef(internalState);
   const changedRef = useRef(changed);
-  const debounceTimerRef = useRef<TimeoutId>();
+  const debounceTimerRef = useRef<TimeoutId>(undefined);
 
   useEffect(() => {
     internalStateRef.current = internalState;

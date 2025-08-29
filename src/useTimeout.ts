@@ -8,7 +8,7 @@ import { TimeoutId } from "./TimeoutId.js";
 export function useTimeout(
   callback: () => void,
   debounceDelayMilliseconds: number = 500,
-  timeoutRef = useRef<TimeoutId>()
+  timeoutRef = useRef<TimeoutId>(undefined),
 ) {
   if (timeoutRef.current) clearTimeout(timeoutRef.current);
 

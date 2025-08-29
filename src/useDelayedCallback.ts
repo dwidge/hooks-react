@@ -2,21 +2,22 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-import { Dispatch, useRef, useEffect } from "react";
-import { TimeoutId } from "./TimeoutId.js";
+import { Dispatch, useEffect, useRef } from "react";
+import { TimeoutId } from "./TimeoutId";
 
 export function useDelayedCallback<T>(
   setValue?: Dispatch<T>,
   delay: number = 5000,
-  debug = ""
+  debug = "",
 ): Dispatch<T> | undefined {
-  const timerRef = useRef<TimeoutId>();
-  const stateRef = useRef<T>();
+  const timerRef = useRef<TimeoutId | undefined>(undefined);
+
+  const stateRef = useRef<T | undefined>(undefined);
 
   useEffect(
     () => () => {
       debug && console.log("useDelayedCallback1", debug);
-      if (timerRef.current) {
+      if (timerRef.current !== undefined) {
         debug && console.log("useDelayedCallback2", debug);
         clearTimeout(timerRef.current);
         timerRef.current = undefined;
@@ -26,14 +27,14 @@ export function useDelayedCallback<T>(
               "useDelayedCallback3",
               debug,
               !!setValue,
-              stateRef.current
+              stateRef.current,
             );
           setValue?.(stateRef.current);
           stateRef.current = undefined;
         }
       }
     },
-    [setValue, debug]
+    [setValue, debug],
   );
 
   return setValue
@@ -41,7 +42,7 @@ export function useDelayedCallback<T>(
         if (delay && delay < 100)
           console.warn("useDelayedCallbackW1: delay is milliseconds");
 
-        if (timerRef.current) clearTimeout(timerRef.current);
+        if (timerRef.current !== undefined) clearTimeout(timerRef.current);
 
         stateRef.current = newValue;
         timerRef.current = setTimeout(() => {
