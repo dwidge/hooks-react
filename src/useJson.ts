@@ -1,6 +1,6 @@
+import { useNullish } from "@dwidge/utils-js";
 import { useMemo } from "react";
 import { AsyncDispatch, AsyncState } from "./State.js";
-import { useNullish } from "@dwidge/utils-js";
 
 export type Json =
   | null
@@ -9,6 +9,8 @@ export type Json =
   | string
   | Json[]
   | { [prop: string]: Json };
+
+export type JsonObject = Record<string, Json>;
 
 /**
  * A React Hook that provides a JSON representation of a string value and a function to update it.
@@ -30,8 +32,37 @@ export function useJson([stringValue, setStringValueAsync]: AsyncState<
               : newValue);
             const stringifiedValue = toString_fromJson(resolvedValue);
             await setStringValueAsync(stringifiedValue);
-            return newValue;
+            return resolvedValue;
           }) as AsyncDispatch<Json | null>)
+        : undefined,
+    [decodedValue, setStringValueAsync],
+  );
+
+  return [decodedValue, setDecodedValueAsync];
+}
+
+export function useJsonObject([stringValue, setStringValueAsync]: AsyncState<
+  string | null
+>): AsyncState<JsonObject | null> {
+  const decodedValueFromJson = toJson_fromString(stringValue);
+  const decodedValue =
+    typeof decodedValueFromJson === "object" &&
+    decodedValueFromJson !== null &&
+    !Array.isArray(decodedValueFromJson)
+      ? (decodedValueFromJson as JsonObject)
+      : null;
+
+  const setDecodedValueAsync = useMemo(
+    () =>
+      setStringValueAsync
+        ? ((async (newValue) => {
+            const resolvedValue = await (newValue instanceof Function
+              ? newValue(decodedValue)
+              : newValue);
+            const stringifiedValue = toString_fromJson(resolvedValue);
+            await setStringValueAsync(stringifiedValue);
+            return resolvedValue;
+          }) as AsyncDispatch<JsonObject | null>)
         : undefined,
     [decodedValue, setStringValueAsync],
   );
