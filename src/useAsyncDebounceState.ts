@@ -3,6 +3,6 @@ import { useAsyncSaveState } from "./useSaveState.js";
 
 export const useAsyncDebounceState = <T>(
   [value, setValue]: AsyncState<T>,
-  delayMs = 1500,
+  delayMs = 500,
   [internal, setInternal] = useAsyncSaveState([value, setValue], true, delayMs),
 ): AsyncState<T> => [internal, setInternal];
