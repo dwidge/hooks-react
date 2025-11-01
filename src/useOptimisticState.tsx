@@ -1,8 +1,8 @@
-import { useMemo, useOptimistic } from "react";
+import { startTransition, useMemo, useOptimistic } from "react";
 import { AsyncDispatch, AsyncState, getActionValue } from "./State";
 
 /**
- * A hook that combines `useOptimistic` with a `useState` tuple.
+ * A hook that combines `useOptimistic` and `startTransition` with a `useState` tuple.
  * It provides an optimistic value and a setter that updates both the optimistic state
  * and the actual state from the provided tuple.
  *
@@ -25,13 +25,19 @@ export function useOptimisticState<T>(
   const setOptimisticAndUpstream: AsyncDispatch<T> | undefined = useMemo(
     () =>
       setValue
-        ? async (action) => {
-            const resolvedValue = await getActionValue(action, value ?? init);
-            setOptimisticInternal(resolvedValue);
-            return setValue(resolvedValue);
-          }
+        ? (action) =>
+            new Promise<T>((resolve) => {
+              startTransition(async () => {
+                const resolvedValue = await getActionValue(
+                  action,
+                  value ?? init,
+                );
+                setOptimisticInternal(resolvedValue);
+                resolve(await setValue(resolvedValue));
+              });
+            })
         : undefined,
-    [value, setValue],
+    [value, setValue, startTransition],
   );
 
   return [optimisticValue, setOptimisticAndUpstream];
