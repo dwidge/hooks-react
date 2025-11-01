@@ -25,5 +25,6 @@ export * from "./useOptionalState.js";
 export * from "./useRecord.js";
 export * from "./useSaveOnExitState.js";
 export * from "./useSaveState.js";
+export * from "./useString.js";
 export * from "./useSyncedState.js";
 export * from "./useTimeout.js";
