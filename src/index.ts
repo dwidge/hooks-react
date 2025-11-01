@@ -20,6 +20,7 @@ export * from "./useLogState.js";
 export * from "./useLogVariables.js";
 export * from "./useMemoState.js";
 export * from "./useMemoValue.js";
+export * from "./useOptimisticState.js";
 export * from "./useOptionalState.js";
 export * from "./useRecord.js";
 export * from "./useSaveOnExitState.js";
